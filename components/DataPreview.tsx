@@ -71,8 +71,6 @@ export function DataPreview({ rows, threshold = 10 }: Props) {
         <tbody>
           {rows.map((row, i) => {
             const fav = isFavorable(row);
-            const color = fav ? "var(--green)" : "var(--red)";
-            const bg = fav ? "var(--green-dim)" : "var(--red-dim)";
             const flagged = Math.abs(row.variancePct) >= threshold;
             return (
               <tr
@@ -81,6 +79,7 @@ export function DataPreview({ rows, threshold = 10 }: Props) {
                   borderBottom: i < rows.length - 1 ? "1px solid var(--border)" : "none",
                   transition: "background 0.15s",
                   borderLeft: flagged ? `2px solid ${fav ? "var(--green)" : "var(--red)"}` : "2px solid transparent",
+
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-raised)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
@@ -116,7 +115,7 @@ export function DataPreview({ rows, threshold = 10 }: Props) {
                   padding: "11px 16px",
                   textAlign: "right",
                   fontSize: "13px",
-                  color,
+                  color: "var(--text-primary)",
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontWeight: 500,
                 }}>
@@ -127,8 +126,8 @@ export function DataPreview({ rows, threshold = 10 }: Props) {
                     display: "inline-block",
                     padding: "2px 7px",
                     borderRadius: "2px",
-                    background: bg,
-                    color,
+                    background: "var(--surface-raised)",
+                    color: "var(--text-secondary)",
                     fontSize: "11px",
                     fontFamily: "'IBM Plex Mono', monospace",
                     fontWeight: 500,

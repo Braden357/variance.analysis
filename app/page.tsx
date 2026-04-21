@@ -12,28 +12,21 @@ export default function Home() {
   const [excelBase64, setExcelBase64] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [emailSent, setEmailSent] = useState(false);
-  const [emailError, setEmailError] = useState("");
-
   // Controls
   const [threshold, setThreshold] = useState(10);
   const [outputMode, setOutputMode] = useState<OutputMode>("Management Report");
-  const [email, setEmail] = useState("");
 
   const handleFile = async (file: File) => {
     setError("");
     setCommentary("");
     setRows([]);
     setExcelBase64("");
-    setEmailSent(false);
-    setEmailError("");
     setLoading(true);
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("threshold", String(threshold));
     formData.append("outputMode", outputMode);
-    formData.append("email", email);
 
     try {
       const res = await fetch("/api/generate", { method: "POST", body: formData });
@@ -42,8 +35,6 @@ export default function Home() {
       setRows(data.rows);
       setCommentary(data.commentary);
       setExcelBase64(data.excelBase64 ?? "");
-      setEmailSent(data.emailSent ?? false);
-      setEmailError(data.emailError ?? "");
     } catch {
       setError("Failed to connect to API");
     } finally {
@@ -110,7 +101,7 @@ export default function Home() {
             {[
               { step: "01", label: "Upload", desc: "Drop your Excel file with Budget & Actuals columns" },
               { step: "02", label: "Analyze", desc: "AI flags variances and writes CFO-ready commentary" },
-              { step: "03", label: "Export", desc: "Download annotated Excel or email it to yourself" },
+              { step: "03", label: "Export", desc: "Download annotated Excel with AI commentary" },
             ].map(({ step, label, desc }, i) => (
               <div key={step} style={{ display: "flex", alignItems: "stretch" }}>
                 <div style={{
@@ -170,8 +161,6 @@ export default function Home() {
             setThreshold={setThreshold}
             outputMode={outputMode}
             setOutputMode={setOutputMode}
-            email={email}
-            setEmail={setEmail}
             disabled={loading}
           />
           <FileUpload onFile={handleFile} disabled={loading} />
@@ -240,37 +229,6 @@ export default function Home() {
                 >
                   ↓ &nbsp;Download Annotated Excel
                 </button>
-              )}
-              {emailSent && (
-                <span style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "10px",
-                  color: "var(--green)",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                }}>
-                  ✓ &nbsp;Excel sent to {email}
-                </span>
-              )}
-              {email && !emailSent && emailError && (
-                <span style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "10px",
-                  color: "var(--red)",
-                  letterSpacing: "0.06em",
-                }}>
-                  Email failed: {emailError}
-                </span>
-              )}
-              {email && !emailSent && !emailError && rows.length > 0 && (
-                <span style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "10px",
-                  color: "var(--text-muted)",
-                  letterSpacing: "0.06em",
-                }}>
-                  Email not configured — download instead
-                </span>
               )}
             </div>
           </div>

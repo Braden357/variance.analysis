@@ -1,48 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import nodemailer from "nodemailer";
-import { google } from "googleapis";
 import { parseVarianceFile } from "@/lib/parse-file";
 import { buildVariancePrompt, OutputMode } from "@/lib/build-prompt";
 import { buildAnnotatedExcel } from "@/lib/build-excel";
 
 const client = new OpenAI();
-
-async function sendGmail(to: string, subject: string, html: string, xlsxBase64: string) {
-  const oauth2 = new google.auth.OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_CLIENT_SECRET,
-    "urn:ietf:wg:oauth:2.0:oob"
-  );
-  oauth2.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
-  const { token: accessToken } = await oauth2.getAccessToken();
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      type: "OAuth2",
-      user: process.env.GMAIL_FROM,
-      clientId: process.env.GMAIL_CLIENT_ID,
-      clientSecret: process.env.GMAIL_CLIENT_SECRET,
-      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-      accessToken: accessToken as string,
-    },
-  });
-
-  await transporter.sendMail({
-    from: `"Variance Commentary" <${process.env.GMAIL_FROM}>`,
-    to,
-    subject,
-    html,
-    attachments: [
-      {
-        filename: "variance-analysis.xlsx",
-        content: Buffer.from(xlsxBase64, "base64"),
-        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      },
-    ],
-  });
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -50,7 +12,6 @@ export async function POST(req: NextRequest) {
   const file = formData.get("file") as File | null;
   const threshold = parseFloat((formData.get("threshold") as string) ?? "10");
   const outputMode = (formData.get("outputMode") as OutputMode) ?? "Management Report";
-  const email = (formData.get("email") as string) ?? "";
 
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -128,34 +89,7 @@ export async function POST(req: NextRequest) {
   const excelBuffer = await buildAnnotatedExcel(rows, commentary, threshold, outputMode);
   const excelBase64 = excelBuffer.toString("base64");
 
-  // Send email via Gmail if provided and credentials configured
-  let emailSent = false;
-  let emailError = "";
-  const gmailReady = process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN && process.env.GMAIL_FROM;
-  if (email && gmailReady) {
-    try {
-      const html = `
-        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #09090e; color: #e8e6df; padding: 40px; border-radius: 4px;">
-          <div style="font-family: monospace; font-size: 10px; letter-spacing: 0.2em; color: #c9a84c; margin-bottom: 20px; text-transform: uppercase;">
-            FP&amp;A Intelligence · ${outputMode}
-          </div>
-          <h2 style="font-size: 20px; color: #e8e6df; margin: 0 0 20px; font-weight: 400;">Variance Commentary</h2>
-          <div style="border-left: 3px solid #c9a84c; padding-left: 20px; margin-bottom: 32px;">
-            <p style="line-height: 1.85; color: #e8e6df; margin: 0;">${commentary}</p>
-          </div>
-          <p style="font-family: monospace; font-size: 10px; color: #44445a; text-transform: uppercase; letter-spacing: 0.08em;">
-            AI-Generated · Review before distribution · Annotated Excel attached
-          </p>
-        </div>
-      `;
-      await sendGmail(email, `Variance Commentary — ${outputMode}`, html, excelBase64);
-      emailSent = true;
-    } catch (err) {
-      emailError = err instanceof Error ? err.message : "Email delivery failed";
-    }
-  }
-
-  return NextResponse.json({ commentary, rows, excelBase64, emailSent, emailError });
+  return NextResponse.json({ commentary, rows, excelBase64 });
   } catch (err) {
     console.error("[generate] unhandled error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

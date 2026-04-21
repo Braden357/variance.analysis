@@ -7,8 +7,6 @@ interface Props {
   setThreshold: (v: number) => void;
   outputMode: OutputMode;
   setOutputMode: (v: OutputMode) => void;
-  email: string;
-  setEmail: (v: string) => void;
   disabled: boolean;
 }
 
@@ -24,8 +22,6 @@ export function OutputControls({
   setThreshold,
   outputMode,
   setOutputMode,
-  email,
-  setEmail,
   disabled,
 }: Props) {
   return (
@@ -156,49 +152,6 @@ export function OutputControls({
         </div>
       </div>
 
-      {/* Email */}
-      <div>
-        <div style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "10px",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "var(--text-secondary)",
-          marginBottom: 10,
-        }}>
-          Email Annotated Excel <span style={{ opacity: 0.5 }}>(optional)</span>
-        </div>
-        <input
-          type="email"
-          value={email}
-          disabled={disabled}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="your@email.com"
-          style={{
-            width: "100%",
-            background: "var(--surface-raised)",
-            border: "1px solid var(--border-bright)",
-            borderRadius: "2px",
-            padding: "10px 14px",
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "12px",
-            color: "var(--text-primary)",
-            outline: "none",
-            transition: "border-color 0.15s ease",
-          }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--gold)")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-bright)")}
-        />
-        <div style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "9px",
-          color: "var(--text-muted)",
-          marginTop: 6,
-          letterSpacing: "0.04em",
-        }}>
-          Annotated .xlsx delivered to your inbox after generation
-        </div>
-      </div>
     </div>
   );
 }
