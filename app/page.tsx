@@ -34,17 +34,10 @@ export default function Home() {
   };
 
   return (
-    <main style={{
-      minHeight: "100vh",
-      background: "var(--bg)",
-      position: "relative",
-      zIndex: 1,
-    }}>
+    <main style={{ minHeight: "100vh", background: "var(--bg)", position: "relative", zIndex: 1 }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 24px 120px" }}>
 
-        {/* Header */}
         <header className="fade-up delay-1" style={{ marginBottom: 56, textAlign: "center" }}>
-          {/* Eyebrow */}
           <div style={{
             fontFamily: "'IBM Plex Mono', monospace",
             fontSize: "10px",
@@ -57,7 +50,6 @@ export default function Home() {
             FP&amp;A Intelligence · AI-Powered
           </div>
 
-          {/* Title */}
           <h1 style={{
             fontFamily: "'Playfair Display', serif",
             fontSize: "clamp(32px, 5vw, 48px)",
@@ -74,14 +66,7 @@ export default function Home() {
             </span>
           </h1>
 
-          {/* Rule */}
-          <div style={{
-            width: 40,
-            height: 1,
-            background: "var(--gold)",
-            margin: "20px auto",
-            opacity: 0.5,
-          }} />
+          <div style={{ width: 40, height: 1, background: "var(--gold)", margin: "20px auto", opacity: 0.5 }} />
 
           <p style={{
             fontSize: "14px",
@@ -98,12 +83,10 @@ export default function Home() {
           </p>
         </header>
 
-        {/* Upload */}
         <div className="fade-up delay-2">
           <FileUpload onFile={handleFile} disabled={loading} />
         </div>
 
-        {/* Loading */}
         {loading && (
           <div style={{
             textAlign: "center",
@@ -119,7 +102,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Error */}
         {error && (
           <div style={{
             marginTop: 24,
@@ -136,7 +118,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Results */}
         {rows.length > 0 && !loading && (
           <div style={{ marginTop: 40, display: "flex", flexDirection: "column", gap: 20 }}>
             <DataPreview rows={rows} />
@@ -144,7 +125,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Footer */}
         <footer className="fade-up delay-4" style={{
           marginTop: 80,
           textAlign: "center",
