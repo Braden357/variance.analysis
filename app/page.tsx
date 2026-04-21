@@ -13,6 +13,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   // Controls
   const [threshold, setThreshold] = useState(10);
@@ -25,6 +26,7 @@ export default function Home() {
     setRows([]);
     setExcelBase64("");
     setEmailSent(false);
+    setEmailError("");
     setLoading(true);
 
     const formData = new FormData();
@@ -41,6 +43,7 @@ export default function Home() {
       setCommentary(data.commentary);
       setExcelBase64(data.excelBase64 ?? "");
       setEmailSent(data.emailSent ?? false);
+      setEmailError(data.emailError ?? "");
     } catch {
       setError("Failed to connect to API");
     } finally {
@@ -64,7 +67,7 @@ export default function Home() {
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--bg)", position: "relative", zIndex: 1 }}>
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 24px 120px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "80px 24px 120px" }}>
 
         <header className="fade-up delay-1" style={{ marginBottom: 56, textAlign: "center" }}>
           <div style={{
@@ -97,19 +100,68 @@ export default function Home() {
 
           <div style={{ width: 40, height: 1, background: "var(--gold)", margin: "20px auto", opacity: 0.5 }} />
 
-          <p style={{
-            fontSize: "14px",
-            color: "var(--text-secondary)",
-            lineHeight: 1.7,
-            maxWidth: 480,
-            margin: "0 auto",
-            fontFamily: "'IBM Plex Sans', sans-serif",
-            fontWeight: 300,
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 0,
+            marginTop: 8,
+            flexWrap: "wrap",
           }}>
-            Upload your Excel budget vs. actuals file.
-            Get CFO-ready variance commentary, flagged variances,
-            and an annotated Excel — in seconds.
-          </p>
+            {[
+              { step: "01", label: "Upload", desc: "Drop your Excel file with Budget & Actuals columns" },
+              { step: "02", label: "Analyze", desc: "AI flags variances and writes CFO-ready commentary" },
+              { step: "03", label: "Export", desc: "Download annotated Excel or email it to yourself" },
+            ].map(({ step, label, desc }, i) => (
+              <div key={step} style={{ display: "flex", alignItems: "stretch" }}>
+                <div style={{
+                  padding: "16px 28px",
+                  textAlign: "center",
+                  maxWidth: 180,
+                }}>
+                  <div style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "10px",
+                    color: "var(--gold)",
+                    letterSpacing: "0.14em",
+                    marginBottom: 6,
+                    opacity: 0.7,
+                  }}>
+                    {step}
+                  </div>
+                  <div style={{
+                    fontFamily: "'IBM Plex Sans', sans-serif",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "var(--text-primary)",
+                    marginBottom: 4,
+                  }}>
+                    {label}
+                  </div>
+                  <div style={{
+                    fontFamily: "'IBM Plex Sans', sans-serif",
+                    fontSize: "12px",
+                    color: "var(--text-secondary)",
+                    lineHeight: 1.5,
+                  }}>
+                    {desc}
+                  </div>
+                </div>
+                {i < 2 && (
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    color: "var(--gold)",
+                    opacity: 0.3,
+                    fontSize: "12px",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    paddingTop: 24,
+                  }}>
+                    →
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </header>
 
         <div className="fade-up delay-2" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -200,14 +252,24 @@ export default function Home() {
                   ✓ &nbsp;Excel sent to {email}
                 </span>
               )}
-              {email && !emailSent && rows.length > 0 && (
+              {email && !emailSent && emailError && (
+                <span style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "10px",
+                  color: "var(--red)",
+                  letterSpacing: "0.06em",
+                }}>
+                  Email failed: {emailError}
+                </span>
+              )}
+              {email && !emailSent && !emailError && rows.length > 0 && (
                 <span style={{
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: "10px",
                   color: "var(--text-muted)",
                   letterSpacing: "0.06em",
                 }}>
-                  Email delivery unavailable — download instead
+                  Email not configured — download instead
                 </span>
               )}
             </div>

@@ -1,14 +1,12 @@
 import { VarianceRow, isFavorable } from "./parse-file";
 
-export type OutputMode = "CFO Summary" | "Management Report" | "Board Pack";
+export type OutputMode = "CFO Summary" | "Management Report";
 
 const modeInstructions: Record<OutputMode, string> = {
   "CFO Summary":
     "Write exactly 2 sentences. Lead with the single most important variance and its dollar impact. Close with one-line overall performance verdict. Extremely concise — the CFO reads this in 10 seconds.",
   "Management Report":
     "Write 4-5 sentences of professional variance commentary. Lead with the most significant variance and its likely business driver. Mention 3-4 key line items. Use business language: 'favorable', 'unfavorable', 'drove', 'offset', 'outperformed'. End with an overall period summary.",
-  "Board Pack":
-    "Write 3 sentences in formal board-level language. No jargon. Dollar amounts only — no percentages in prose. Use 'exceeded', 'fell short of', 'driven by'. Assume the reader is a non-finance board member. Close with a one-sentence outlook implication.",
 };
 
 export function buildVariancePrompt(

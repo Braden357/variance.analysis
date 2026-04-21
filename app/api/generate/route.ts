@@ -130,6 +130,7 @@ export async function POST(req: NextRequest) {
 
   // Send email via Gmail if provided and credentials configured
   let emailSent = false;
+  let emailError = "";
   const gmailReady = process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN && process.env.GMAIL_FROM;
   if (email && gmailReady) {
     try {
@@ -149,12 +150,12 @@ export async function POST(req: NextRequest) {
       `;
       await sendGmail(email, `Variance Commentary — ${outputMode}`, html, excelBase64);
       emailSent = true;
-    } catch {
-      // Email failure is non-fatal — download still works
+    } catch (err) {
+      emailError = err instanceof Error ? err.message : "Email delivery failed";
     }
   }
 
-  return NextResponse.json({ commentary, rows, excelBase64, emailSent });
+  return NextResponse.json({ commentary, rows, excelBase64, emailSent, emailError });
   } catch (err) {
     console.error("[generate] unhandled error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

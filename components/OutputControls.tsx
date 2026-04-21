@@ -1,6 +1,6 @@
 "use client";
 
-export type OutputMode = "CFO Summary" | "Management Report" | "Board Pack";
+export type OutputMode = "CFO Summary" | "Management Report";
 
 interface Props {
   threshold: number;
@@ -12,12 +12,11 @@ interface Props {
   disabled: boolean;
 }
 
-const MODES: OutputMode[] = ["CFO Summary", "Management Report", "Board Pack"];
+const MODES: OutputMode[] = ["CFO Summary", "Management Report"];
 
 const modeDescriptions: Record<OutputMode, string> = {
   "CFO Summary": "2 sentences · top-line only",
   "Management Report": "4-5 sentences · key drivers",
-  "Board Pack": "3 sentences · formal · no jargon",
 };
 
 export function OutputControls({
