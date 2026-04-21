@@ -1,7 +1,8 @@
-import { VarianceRow } from "@/lib/parse-file";
+import { VarianceRow, isFavorable } from "@/lib/parse-file";
 
 interface Props {
   rows: VarianceRow[];
+  threshold?: number;
 }
 
 const fmt = (n: number) =>
@@ -9,7 +10,7 @@ const fmt = (n: number) =>
 
 const fmtPct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
 
-export function DataPreview({ rows }: Props) {
+export function DataPreview({ rows, threshold = 10 }: Props) {
   return (
     <div className="reveal" style={{ borderRadius: "2px", overflow: "hidden", border: "1px solid var(--border)" }}>
       {/* Table header bar */}
@@ -39,14 +40,14 @@ export function DataPreview({ rows }: Props) {
           fontFamily: "'IBM Plex Mono', monospace",
           opacity: 0.7,
         }}>
-          {rows.length} LINE ITEMS
+          {rows.length} LINE ITEMS · {rows.filter(r => Math.abs(r.variancePct) >= threshold).length} FLAGGED
         </span>
       </div>
 
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ background: "var(--surface)" }}>
-            {["Account", "Budget", "Actuals", "Variance", "Δ%"].map((h, i) => (
+            {["Account", "Budget", "Actuals", "Variance", "Δ%", ""].map((h, i) => (
               <th
                 key={h}
                 style={{
@@ -69,15 +70,17 @@ export function DataPreview({ rows }: Props) {
         </thead>
         <tbody>
           {rows.map((row, i) => {
-            const fav = row.variance >= 0;
+            const fav = isFavorable(row);
             const color = fav ? "var(--green)" : "var(--red)";
             const bg = fav ? "var(--green-dim)" : "var(--red-dim)";
+            const flagged = Math.abs(row.variancePct) >= threshold;
             return (
               <tr
                 key={i}
                 style={{
                   borderBottom: i < rows.length - 1 ? "1px solid var(--border)" : "none",
                   transition: "background 0.15s",
+                  borderLeft: flagged ? `2px solid ${fav ? "var(--green)" : "var(--red)"}` : "2px solid transparent",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-raised)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
@@ -133,6 +136,20 @@ export function DataPreview({ rows }: Props) {
                   }}>
                     {fmtPct(row.variancePct)}
                   </span>
+                </td>
+                <td style={{ padding: "11px 16px", textAlign: "center" }}>
+                  {flagged && (
+                    <span style={{
+                      fontSize: "9px",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontWeight: 700,
+                      letterSpacing: "0.06em",
+                      color: fav ? "var(--green)" : "var(--red)",
+                      textTransform: "uppercase",
+                    }}>
+                      {fav ? "▲ FAV" : "▼ UNF"}
+                    </span>
+                  )}
                 </td>
               </tr>
             );
