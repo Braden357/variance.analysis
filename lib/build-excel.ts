@@ -1,6 +1,5 @@
 import ExcelJS from "exceljs";
-import { VarianceRow } from "./parse-file";
-import { isFavorable } from "./parse-file";
+import { VarianceRow, rankDrivers, isFavorable } from "./parse-file";
 
 const HEADER_BG = "FFE8EAF0";
 const HEADER_TEXT = "FF1A1A2E";
@@ -36,7 +35,7 @@ export async function buildAnnotatedExcel(
   // Subtitle row
   dataSheet.mergeCells("A2:F2");
   const subCell = dataSheet.getCell("A2");
-  subCell.value = `Output Mode: ${outputMode}  ·  Threshold: ${threshold}%  ·  AI-Generated — review before distribution`;
+  subCell.value = `Output Mode: ${outputMode}  ·  Threshold: ${threshold}%`;
   subCell.font = { name: "Calibri", size: 9, color: { argb: "FF6B7280" } };
   subCell.alignment = { horizontal: "left" };
   dataSheet.getRow(2).height = 16;
@@ -135,14 +134,14 @@ export async function buildAnnotatedExcel(
 
   comSheet.mergeCells("A1:D1");
   const comTitle = comSheet.getCell("A1");
-  comTitle.value = "AI-Generated Variance Commentary";
+  comTitle.value = "Variance Commentary";
   comTitle.font = { name: "Calibri", bold: true, size: 13, color: { argb: HEADER_TEXT } };
   comTitle.alignment = { horizontal: "left", vertical: "middle" };
   comSheet.getRow(1).height = 32;
 
   comSheet.mergeCells("A2:D2");
   const comMeta = comSheet.getCell("A2");
-  comMeta.value = `Output Mode: ${outputMode}  ·  AI-Generated  ·  Review before distribution`;
+  comMeta.value = `Output Mode: ${outputMode}`;
   comMeta.font = { name: "Calibri", size: 9, color: { argb: "FF6B7280" } };
   comSheet.getRow(2).height = 16;
 
@@ -166,6 +165,86 @@ export async function buildAnnotatedExcel(
   comSheet.getColumn(2).width = 22;
   comSheet.getColumn(3).width = 22;
   comSheet.getColumn(4).width = 22;
+
+  // Sheet 3: Bridge Analysis
+  const GOLD_BG = "FFFFF0CC";
+  const GOLD_TEXT = "FF92660A";
+  const bridgeSheet = wb.addWorksheet("Bridge Analysis");
+  bridgeSheet.views = [{ showGridLines: false }];
+
+  bridgeSheet.mergeCells("A1:E1");
+  const bTitle = bridgeSheet.getCell("A1");
+  bTitle.value = "Budget → Actuals Bridge";
+  bTitle.font = { name: "Calibri", bold: true, size: 13, color: { argb: HEADER_TEXT } };
+  bTitle.alignment = { horizontal: "left", vertical: "middle" };
+  bridgeSheet.getRow(1).height = 32;
+  bridgeSheet.getRow(2).height = 8;
+
+  const bHeaders = ["Line Item", "Budget", "Actuals", "Variance ($)", "Variance (%)"];
+  const bHeaderRow = bridgeSheet.getRow(3);
+  bHeaderRow.height = 22;
+  bHeaders.forEach((h, i) => {
+    const cell = bHeaderRow.getCell(i + 1);
+    cell.value = h;
+    cell.font = { name: "Calibri", bold: true, size: 9, color: { argb: HEADER_TEXT } };
+    cell.alignment = { horizontal: i === 0 ? "left" : "center", vertical: "middle" };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: HEADER_BG } };
+    cell.border = { bottom: { style: "medium", color: { argb: BORDER_COLOR } } };
+  });
+
+  const totalBudget = rows.reduce((s, r) => s + r.budget, 0);
+  const totalActuals = rows.reduce((s, r) => s + r.actuals, 0);
+  const drivers = rankDrivers(rows, 8);
+
+  const writeBridgeRow = (
+    rowNum: number,
+    label: string,
+    budget: number,
+    actuals: number,
+    variance: number,
+    variancePct: number,
+    isTotal: boolean,
+    favorable: boolean | null
+  ) => {
+    const r = bridgeSheet.getRow(rowNum);
+    r.height = 22;
+    const bg = isTotal ? GOLD_BG : (favorable === null ? "FFFFFFFF" : (favorable ? GREEN_BG : RED_BG));
+    const varColor = isTotal ? GOLD_TEXT : (favorable ? GREEN_TEXT : RED_TEXT);
+    const border = { style: "hair" as const, color: { argb: BORDER_COLOR } };
+
+    const cells = [label, fmt(budget), fmt(actuals),
+      `${variance >= 0 ? "+" : ""}${fmt(variance)}`,
+      `${variancePct >= 0 ? "+" : ""}${variancePct.toFixed(1)}%`];
+    cells.forEach((val, i) => {
+      const cell = r.getCell(i + 1);
+      cell.value = val;
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
+      cell.border = { bottom: border };
+      cell.alignment = { horizontal: i === 0 ? "left" : "right", vertical: "middle" };
+      cell.font = {
+        name: "Calibri",
+        size: 10,
+        bold: isTotal,
+        color: { argb: i >= 3 ? varColor : (isTotal ? GOLD_TEXT : HEADER_TEXT) },
+      };
+    });
+  };
+
+  writeBridgeRow(4, "Budget", totalBudget, totalBudget, 0, 0, true, null);
+
+  drivers.forEach((d, i) => {
+    const fav = isFavorable(d);
+    writeBridgeRow(5 + i, d.lineItem, d.budget, d.actuals, d.variance, d.variancePct, false, fav);
+  });
+
+  const actualsRow = 5 + drivers.length;
+  writeBridgeRow(actualsRow, "Actuals", totalActuals, totalActuals, totalActuals - totalBudget, totalBudget !== 0 ? ((totalActuals - totalBudget) / Math.abs(totalBudget)) * 100 : 0, true, null);
+
+  bridgeSheet.getColumn(1).width = 28;
+  bridgeSheet.getColumn(2).width = 14;
+  bridgeSheet.getColumn(3).width = 14;
+  bridgeSheet.getColumn(4).width = 14;
+  bridgeSheet.getColumn(5).width = 12;
 
   const buffer = await wb.xlsx.writeBuffer();
   return Buffer.from(buffer);

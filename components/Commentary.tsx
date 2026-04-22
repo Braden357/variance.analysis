@@ -99,7 +99,6 @@ export function Commentary({ text }: Props) {
         display: "flex",
         justifyContent: "space-between",
       }}>
-        <span>AI-Generated · Review before distribution</span>
         <span>v1</span>
       </div>
     </div>
